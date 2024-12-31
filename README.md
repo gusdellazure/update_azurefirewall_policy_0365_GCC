@@ -1,5 +1,11 @@
-# update_azurefirewall_policy_0365_GCC
-A simple way to update your firewall policy for GCC 
+To create a PowerShell script that adds Azure Firewall policy rules based on the provided JSON file, follow these steps:
+
+1. Parse the JSON file.
+2. Loop through each rule and create the corresponding network and application rules in the Azure Firewall policy.
+
+Here is a PowerShell script to achieve this:
+
+```powershell
 # Define the path to the JSON file
 $jsonFilePath = "path_to_your_json_file.json"
 
@@ -96,3 +102,18 @@ foreach ($rule in $jsonContent) {
 }
 
 Write-Host "Firewall rules have been created."
+```
+
+### Explanation:
+1. **Import JSON File**: The script reads and converts the JSON file into a PowerShell object.
+2. **Define Variables**: Set the resource group name and firewall policy name.
+3. **Functions**: Define functions to create network and application rules using Azure CLI.
+4. **Loop Through Rules**: The script loops through each rule in the JSON file and creates the corresponding network or application rule based on the presence of URLs and IP addresses.
+5. **Priority and Action**: Set the priority and action for each rule. Increment the priority for each subsequent rule to ensure unique priorities.
+
+### Usage:
+- Save the script as a `.ps1` file (e.g., `CreateAzureFirewallRules.ps1`).
+- Update the variables `$jsonFilePath`, `$resourceGroupName`, and `$firewallPolicyName` with your actual values.
+- Run the script in PowerShell: `.\CreateAzureFirewallRules.ps1`.
+
+This script will create the necessary firewall rules in your Azure Firewall policy based on the provided JSON file.
