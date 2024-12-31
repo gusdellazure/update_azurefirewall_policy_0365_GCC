@@ -1,12 +1,4 @@
-To create a PowerShell script that adds Azure Firewall policy rules based on the provided JSON file, follow these steps:
-
-get the firewall information from Microsoft 
-https://endpoints.office.com/endpoints/worldwide?clientrequestid=b10c5ed1-bad1-445f-b386-b919946339a7
-
-1. Parse the JSON file.
-2. Loop through each rule and create the corresponding network and application rules in the Azure Firewall policy.
-
-Here is a PowerShell script to achieve this:
+Here is the complete PowerShell script:
 
 ```powershell
 # Define the path to the JSON file
@@ -31,20 +23,28 @@ function Create-NetworkRule {
         [string]$Action,
         [string]$RuleCollectionName
     )
-    az network firewall policy rule-collection group collection rule add \
-        --policy-name $firewallPolicyName \
-        --resource-group $resourceGroupName \
-        --rule-collection-group-name $RuleCollectionName \
-        --rule-collection-name $RuleCollectionName \
-        --name $Name \
-        --rule-type NetworkRule \
-        --rule-name $Name \
-        --priority $Priority \
-        --action $Action \
-        --rule-protocols $Protocols \
-        --source-addresses $SourceAddresses \
-        --destination-addresses $DestinationAddresses \
-        --destination-ports $DestinationPorts
+    $command = @"
+az network firewall policy rule-collection group collection rule add `
+    --policy-name $firewallPolicyName `
+    --resource-group $resourceGroupName `
+    --rule-collection-group-name $RuleCollectionName `
+    --rule-collection-name $RuleCollectionName `
+    --name $Name `
+    --rule-type NetworkRule `
+    --rule-name $Name `
+    --priority $Priority `
+    --action $Action `
+    --rule-protocols $Protocols `
+    --source-addresses $SourceAddresses `
+    --destination-addresses $DestinationAddresses `
+    --destination-ports $DestinationPorts
+"@
+    try {
+        Invoke-Expression $command
+        Write-Host "Network rule '$Name' created successfully."
+    } catch {
+        Write-Host "Failed to create network rule '$Name'. Error: $_"
+    }
 }
 
 # Function to create application rule
@@ -58,19 +58,27 @@ function Create-ApplicationRule {
         [string]$Action,
         [string]$RuleCollectionName
     )
-    az network firewall policy rule-collection group collection rule add \
-        --policy-name $firewallPolicyName \
-        --resource-group $resourceGroupName \
-        --rule-collection-group-name $RuleCollectionName \
-        --rule-collection-name $RuleCollectionName \
-        --name $Name \
-        --rule-type ApplicationRule \
-        --rule-name $Name \
-        --priority $Priority \
-        --action $Action \
-        --rule-protocols $Protocols \
-        --source-addresses $SourceAddresses \
-        --target-fqdns $TargetFqdns
+    $command = @"
+az network firewall policy rule-collection group collection rule add `
+    --policy-name $firewallPolicyName `
+    --resource-group $resourceGroupName `
+    --rule-collection-group-name $RuleCollectionName `
+    --rule-collection-name $RuleCollectionName `
+    --name $Name `
+    --rule-type ApplicationRule `
+    --rule-name $Name `
+    --priority $Priority `
+    --action $Action `
+    --rule-protocols $Protocols `
+    --source-addresses $SourceAddresses `
+    --target-fqdns $TargetFqdns
+"@
+    try {
+        Invoke-Expression $command
+        Write-Host "Application rule '$Name' created successfully."
+    } catch {
+        Write-Host "Failed to create application rule '$Name'. Error: $_"
+    }
 }
 
 $priority = 100
@@ -81,7 +89,13 @@ foreach ($rule in $jsonContent) {
     $name = "Rule$($rule.id)"
     $ruleCollectionName = "Collection$($rule.id)"
     $sourceAddresses = "*"
-    $destinationAddresses = $rule.ips -join ","
+    
+    if ($rule.ips) {
+        $destinationAddresses = $rule.ips -join ","
+    } else {
+        $destinationAddresses = "*"
+    }
+
     $protocols = @()
 
     if ($rule.tcpPorts) {
@@ -108,15 +122,22 @@ Write-Host "Firewall rules have been created."
 ```
 
 ### Explanation:
-1. **Import JSON File**: The script reads and converts the JSON file into a PowerShell object.
-2. **Define Variables**: Set the resource group name and firewall policy name.
-3. **Functions**: Define functions to create network and application rules using Azure CLI.
-4. **Loop Through Rules**: The script loops through each rule in the JSON file and creates the corresponding network or application rule based on the presence of URLs and IP addresses.
-5. **Priority and Action**: Set the priority and action for each rule. Increment the priority for each subsequent rule to ensure unique priorities.
+1. **Import JSON File**: Read and convert the JSON file into a PowerShell object.
+2. **Define Variables**: Set the resource group and firewall policy names.
+3. **Functions**: Define `Create-NetworkRule` and `Create-ApplicationRule` functions to add rules using Azure CLI.
+4. **Command Construction**: Construct the `az` command as a multi-line string using `@` and `"` for readability.
+5. **Error Handling**: Use `try` and `catch` blocks to handle errors and provide feedback.
+6. **Loop Through Rules**: Loop through each rule in the JSON file and call the appropriate function based on whether URLs are present (for application rules) or not (for network rules).
 
-### Usage:
-- Save the script as a `.ps1` file (e.g., `CreateAzureFirewallRules.ps1`).
-- Update the variables `$jsonFilePath`, `$resourceGroupName`, and `$firewallPolicyName` with your actual values.
-- Run the script in PowerShell: `.\CreateAzureFirewallRules.ps1`.
+### Steps to Run the Script:
+1. **Update Variables**: Replace `path_to_your_json_file.json`, `YourResourceGroupName`, and `YourFirewallPolicyName` with your actual values.
+2. **Save Script**: Save the script as `CreateAzureFirewallRules.ps1`.
+3. **Execute Script**:
+   - Open PowerShell.
+   - Navigate to the script's directory.
+   - Run the script:
+     ```powershell
+     .\CreateAzureFirewallRules.ps1
+     ```
 
-This script will create the necessary firewall rules in your Azure Firewall policy based on the provided JSON file.
+This script should correctly create the necessary firewall rules in your Azure Firewall policy based on the provided JSON file. If you encounter any specific errors, please provide the error messages for further troubleshooting.
