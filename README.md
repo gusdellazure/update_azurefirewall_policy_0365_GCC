@@ -1,5 +1,8 @@
 To create a PowerShell script that adds Azure Firewall policy rules based on the provided JSON file, follow these steps:
 
+get the firewall information from Microsoft 
+https://endpoints.office.com/endpoints/worldwide?clientrequestid=b10c5ed1-bad1-445f-b386-b919946339a7
+
 1. Parse the JSON file.
 2. Loop through each rule and create the corresponding network and application rules in the Azure Firewall policy.
 
